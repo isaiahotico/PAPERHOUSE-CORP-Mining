@@ -3,108 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAPERHOUSE INC Mining</title>
+    <title>Sampaguita Mining Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="//libtl.com/sdk.js" data-zone="10555663" data-sdk="show_10555663"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
-        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
-        .progress-bar { transition: width 1s linear; }
+        body { font-family: 'Outfit', sans-serif; background-color: #f1f5f9; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content.active { display: block; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); }
+        .progress-fill { transition: width 1s linear; }
     </style>
 </head>
 <body class="pb-32">
 
-    <!-- Login Screen -->
+    <!-- Auth Overlay -->
     <div id="auth-screen" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-8">
-        <div class="bg-green-50 p-6 rounded-full mb-6">
-            <span class="text-6xl">🌸</span>
+        <div class="w-24 h-24 bg-green-500 rounded-3xl rotate-12 flex items-center justify-center shadow-2xl mb-8">
+            <span class="text-5xl -rotate-12">🌸</span>
         </div>
-        <h1 class="text-3xl font-extrabold text-slate-800 mb-2">Welcome Back</h1>
-        <p class="text-slate-400 mb-8 text-center text-sm">Grow your virtual garden and earn daily.</p>
+        <h1 class="text-3xl font-black text-slate-800 mb-2">Flower Miner</h1>
+        <p class="text-slate-400 mb-8 text-center">Buy flowers, earn profit, withdraw via GCash.</p>
         <div class="w-full max-w-sm space-y-4">
-            <input type="text" id="username" placeholder="Username" class="w-full bg-slate-100 p-4 rounded-2xl outline-none focus:ring-2 ring-green-500 transition-all">
+            <input type="text" id="username" placeholder="Enter Username" class="w-full bg-slate-100 p-4 rounded-2xl outline-none focus:ring-2 ring-green-500">
             <input type="text" id="ref-input" placeholder="Referral Code (Optional)" class="w-full bg-slate-100 p-4 rounded-2xl outline-none">
-            <button onclick="login()" class="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-xl shadow-green-200 active:scale-95 transition-transform">Get Started</button>
+            <button onclick="login()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-xl active:scale-95 transition-all">Start Mining</button>
         </div>
     </div>
 
-    <!-- Top Stats -->
-    <header class="bg-green-600 text-white pt-8 pb-16 px-6 rounded-b-[3rem] shadow-lg relative">
+    <!-- Header Stats -->
+    <div class="bg-slate-900 text-white pt-10 pb-20 px-6 rounded-b-[3rem] shadow-2xl">
         <div class="max-w-md mx-auto">
-            <div class="flex justify-between items-center mb-6">
-                <div>                    <p class="text-xs font-medium opacity-80 uppercase tracking-widest">Available Balance</p>
+            <div class="flex justify-between items-start mb-6">
+                <div>
+
+                    <p class="text-xs font-bold text-green-400 uppercase tracking-widest">Total Balance</p>
                     <h1 class="text-4xl font-black">₱<span id="balance">0.00</span></h1>
                 </div>
-                <button onclick="showAdminPrompt()" class="bg-white/20 p-2 rounded-xl text-xs backdrop-blur-md">Admin</button>
+                <button onclick="showAdminPrompt()" class="bg-white/10 px-4 py-2 rounded-xl text-[10px] font-bold border border-white/20">ADMIN</button>
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white/10 p-3 rounded-2xl backdrop-blur-md">
-                    <p class="text-[10px] opacity-70">Global Farmers</p>
-                    <p id="total-users" class="text-lg font-bold">0</p>
+                <div class="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                    <p class="text-[10px] text-slate-400 uppercase">My ID</p>
+                    <p id="display-uid" class="text-sm font-bold truncate">---</p>
                 </div>
-                <div class="bg-white/10 p-3 rounded-2xl backdrop-blur-md">
-                    <p class="text-[10px] opacity-70">My Unique ID</p>
-                    <p id="display-uid" class="text-sm font-mono font-bold uppercase truncate">---</p>
+                <div class="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                    <p class="text-[10px] text-slate-400 uppercase">Active Users</p>
+                    <p id="total-users" class="text-sm font-bold">0</p>
                 </div>
             </div>
         </div>
-    </header>
+    </div>
 
-    <main class="max-w-md mx-auto px-4 -mt-8 relative z-10">
+    <main class="max-w-md mx-auto px-4 -mt-10 relative z-10">
         
-        <!-- MINING TAB -->
+        <!-- SHOP/MINING TAB -->
         <div id="tab-mining" class="tab-content active">
             <!-- Market -->
-            <div class="grid grid-cols-2 gap-3 mb-8">
-                <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100">
-                    <span class="text-2xl">🌸</span>
-                    <h3 class="font-bold text-slate-700 mt-2">Sampaguita</h3>
-                    <p class="text-[10px] text-slate-400 mb-3">Cost: ₱50 | Profit: ₱5</p>
-                    <button onclick="buyFlower('sampaguita')" id="btn-buy-sampaguita" class="w-full py-2 bg-green-500 text-white text-xs font-bold rounded-xl shadow-md">BUY (0/10)</button>
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-200">
+                    <span class="text-3xl">🌸</span>
+                    <h3 class="font-black text-slate-800 mt-2">Sampaguita</h3>
+                    <p class="text-[10px] text-slate-400 mb-3">₱50 → ₱55 (7 Days)</p>
+                    <button onclick="buyFlower('sampaguita')" id="btn-buy-sampaguita" class="w-full py-2 bg-green-500 text-white text-[10px] font-black rounded-xl">BUY (0/10)</button>
                 </div>
-                <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100">
-                    <span class="text-2xl">🌹</span>
-                    <h3 class="font-bold text-slate-700 mt-2">Red Rose</h3>
-                    <p class="text-[10px] text-slate-400 mb-3">Cost: ₱100 | Profit: ₱10</p>
-                    <button onclick="buyFlower('rose')" id="btn-buy-rose" class="w-full py-2 bg-rose-500 text-white text-xs font-bold rounded-xl shadow-md">BUY (0/10)</button>                </div>
+                <div class="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-200">
+                    <span class="text-3xl">🌹</span>
+                    <h3 class="font-black text-slate-800 mt-2">Red Rose</h3>
+                    <p class="text-[10px] text-slate-400 mb-3">₱100 → ₱110 (7 Days)</p>
+                    <button onclick="buyFlower('rose')" id="btn-buy-rose" class="w-full py-2 bg-rose-500 text-white text-[10px] font-black rounded-xl">BUY (0/10)</button>
+                </div>
             </div>
 
-            <!-- Garden List -->
-            <div class="flex justify-between items-end mb-4">
-                <h2 class="text-lg font-black text-slate-800">My Garden</h2>
-                <p class="text-[10px] text-orange-500 font-bold bg-orange-50 px-2 py-1 rounded">Crops pause after 4h</p>
+            <!-- Dragon Engineer Section -->
+            <div class="bg-slate-900 p-6 rounded-[2rem] shadow-xl mb-8 relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-green-400 font-black italic">DRAGON ENGINEER</h3>
+                        <span class="bg-green-500 text-white text-[8px] px-2 py-0.5 rounded-full font-bold">AUTO-HARVEST</span>
+                    </div>
+                    <p class="text-white text-xs mb-4">Auto-claims all your flowers for 24 hours. No 4-hour pause!</p>
+                    <div id="dragon-timer-display" class="hidden mb-4 text-center border border-green-500/30 rounded-xl py-2 bg-green-500/10">
+                        <p class="text-[10px] text-green-400 uppercase font-bold">Active Time Remaining</p>
+                        <p id="dragon-time-left" class="text-white font-mono font-bold">00:00:00</p>
+                    </div>
+                    <button onclick="buyDragonEngineer()" class="w-full bg-green-500 text-slate-900 py-3 rounded-2xl font-black text-xs hover:bg-green-400 transition-colors">
+                        ACTIVATE (₱0.50 per Farm)
+                    </button>
+                </div>
+                <span class="absolute -right-4 -bottom-4 text-7xl opacity-20 gray
+
+scale">🐉</span>
             </div>
-            <div id="garden-list" class="space-y-4">
-                <!-- Mining Items Injected Here -->
-            </div>
+
+            <!-- Garden -->
+            <h2 class="text-lg font-black text-slate-800 mb-4 ml-2">My Garden</h2>
+            <div id="garden-list" class="space-y-4"></div>
         </div>
 
         <!-- WALLET TAB -->
         <div id="tab-wallet" class="tab-content">
-            <div class="bg-white p-6 rounded-3xl shadow-sm mb-6">
-                <h3 class="font-bold mb-4 text-slate-800">Withdraw Funds</h3>
-                <div class="space-y-3 mb-4">
-                    <input type="number" id="wit-amount" placeholder="Min. 100 PHP" class="w-full p-3 bg-slate-50 rounded-xl outline-none">
-                    <input type="text" id="wit-address" placeholder="GCash No. / Wallet Address" class="w-full p-3 bg-slate-50 rounded-xl outline-none">
-                    <select id="wit-method" class="w-full p-3 bg-slate-50 rounded-xl outline-none">
+            <!-- Withdrawal -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm mb-6">
+                <h3 class="font-black text-slate-800 mb-4">Cashout (Min: ₱100)</h3>
+                <div class="space-y-3">
+                    <input type="number" id="wit-amount" placeholder="Amount" class="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100">
+                    <input type="text" id="wit-address" placeholder="GCash Number / Email" class="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100">
+                    <select id="wit-method" class="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100">
                         <option>GCash</option>
                         <option>PayPal</option>
                         <option>FaucetPay</option>
                     </select>
+                    <button onclick="submitWithdrawal()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black">Withdraw Now</button>
                 </div>
-                <button onclick="submitWithdrawal()" class="w-full bg-sllet')" class="flex-1 py-3 flex flex-col items-center">
-            <span class="text-xl">💳</span>
-            <span class="text-[10px] font-bold">Wallet</span>
+            </div>
+
+            <!-- Deposit -->
+            <div class="bg-indigo-600 p-6 rounded-[2rem] text-white shadow-xl mb-8">
+                <h3 class="font-black mb-1">Add Funds</h3>
+                <p class="text-[10px] opacity-70 mb-4 uppercase font-bold">Send to: 09952533453 (GCash)</p>
+                <div class="space-y-3 text-slate-800">
+                    <input type="number" id="dep-amount" placeholder="Amount" class="w-full p-4 bg-white rounded-2xl outline-none">
+                    <input type="text" id="dep-ref" placeholder="Ref Number" class="w-full p-4 bg-white rounded-2xl outline-none">
+                    <select id="dep-method" class="w-full p-4 bg-white rounded-2xl outline-none">
+                        <option>GCash</option>
+                        <option>PayPal</option>
+                        <option>FaucetPay</option>
+                    </select>
+                    <button onclick="submitDeposit()" class="w-full bg-white text-indigo-600 py-4 rounded-2xl font-black shadow-lg">Confirm Deposit</button>
+                </div>
+            </div>
+
+            <h3 class="font-black text-slate-800 mb-3 ml-2">Recent Withdrawals</h3>
+            <div id="withdraw-history" class="space-y-2"></div>
+        </div>
+
+        <!-- INVITE TAB -->
+        <div id="tab-invite" class="tab-content text-center">
+            <div class="bg-white p-8 rounded-[2rem] shadow-sm">
+                <div class="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🎁</div>
+                <h3 class="font-black text-slate-800 text-xl">Referral Program</h3>
+                <p class="text-sm text-slate-400 mb-8">Earn 5% instantly whenever your friends deposit.</p>
+                <div class="bg-slate-50 border-2 border-dashed border-slate-200 p-6 rounded-3xl mb-8">
+                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">My Promo Code</p>
+                    <p id="my-ref-code" class="text-4xl font-black text-indigo-600 tracking-tighter">------</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-4 rounded-2xl">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Total Invited</p>
+                        <p id="
+
+total-refs" class="text-2xl font-black text-slate-800">0</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Total Earned</p>
+                        <p id="ref-earnings" class="text-2xl font-black text-green-600">₱0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN TAB -->
+        <div id="tab-admin" class="tab-content">
+            <h2 class="font-black text-xl mb-4 text-slate-800">Manage Requests</h2>
+            <div id="admin-requests" class="space-y-4"></div>
+        </div>
+    </main>
+
+    <!-- Footer Date/Time -->
+    <footer class="fixed bottom-24 left-0 right-0 flex justify-center pointer-events-none">
+        <div id="footer-time" class="bg-slate-900/80 text-white text-[10px] px-4 py-1.5 rounded-full backdrop-blur-md border border-white/10 font-bold"></div>
+    </footer>
+
+    <!-- Tab Bar -->
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-sm glass-card rounded-[2.5rem] p-2 flex justify-between shadow-2xl z-50">
+        <button onclick="switchTab('mining')" class="flex-1 py-4 flex flex-col items-center">
+            <span class="text-xl">🎋</span>
+            <span class="text-[10px] font-black uppercase text-slate-400">Garden</span>
         </button>
-        <button onclick="switchTab('invite')" class="flex-1 py-3 flex flex-col items-center">
-            <span class="text-xl">🎁</span>
-            <span class="text-[10px] font-bold">Invite</span>
+        <button onclick="switchTab('wallet')" class="flex-1 py-4 flex flex-col items-center">
+            <span class="text-xl">💳</span>
+            <span class="text-[10px] font-black uppercase text-slate-400">Wallet</span>
+        </button>
+        <button onclick="switchTab('invite')" class="flex-1 py-4 flex flex-col items-center">
+            <span class="text-xl">💎</span>
+            <span class="text-[10px] font-black uppercase text-slate-400">Invite</span>
         </button>
     </nav>
 
