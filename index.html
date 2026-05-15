@@ -3,192 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flower Miner Pro</title>
+    <title>Sampaguita Mining</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="//libtl.com/sdk.js" data-zone="10555663" data-sdk="show_10555663"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Ad SDK -->
+    <script src='//libtl.com/sdk.js' data-zone='10555663' data-sdk='show_10555663'></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Outfit', sans-serif; background-color: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .mining-animate { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
+        body { background: #f0f2f5; font-family: 'Inter', sans-serif; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.5); }
-        .slide-menu { transform: translateX(-100%); transition: transform 0.3s ease-out; }
-        .slide-menu.open { transform: translateX(0); }
-        .overlay { z-index: 40; }
-        .progress-fill { transition: width 1s linear; }
+        .tab-content.active { display: block; }
     </style>
 </head>
-<body class="overflow-x-hidden">
-
-    <!-- Sidebar Menu -->
-    <aside id="sidebar-menu" class="fixed inset-y-0 left-0 w-64 bg-slate-900 text-white p-6 z-50 slide-menu">
-        <div class="flex items-center justify-between mb-10">
-            <h2 class="text-xl font-black">MENU</h2>
-            <button onclick="toggleMenu()" class="text-2xl">&times;</button>
-        </div>
-        <nav class="space-y-4">
-            <a href="#" onclick="switchTab('mining'); toggleMenu();" class="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-700">
-                <span class="text-xl">🌱</span><span>Garden</span>
-            </a>
-            <a href="#" onclick="switchTab('wallet'); toggleMenu();" class="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-700">
-                <span class="text-xl">💳</span><span>Wallet</span>
-            </a>
-            <a href="#" onclick="switchTab('invite'); toggleMenu();" class="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-700">
-                <span class="text-xl">🤝</span><span>Invite</span>
-            </a>
-
-             <a href="#" onclick="showAdminPrompt();" class="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-700 transition-colors">
-                <span class="text-xl">⚙️</span><span>Admin</span>
-            </a>
-        </nav>
-    </aside>
-    <div id="menu-overlay" class="fixed inset-0 bg-black opacity-0 pointer-events-none z-40 overlay" onclick="toggleMenu()"></div>
+<body class="pb-20">
 
     <!-- Auth Overlay -->
-    <div id="auth-screen" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-8">
-        <div class="mb-6 text-6xl">🌻</div>
-        <h1 class="text-3xl font-black text-slate-800 mb-2">Flower Miner</h1>
-        <p class="text-slate-400 mb-8 text-center text-sm">Earn ₱5 - ₱10 profit per plant every 7 days.</p>
+    <div id="auth-screen" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6">
+        <h1 class="text-3xl font-bold text-green-600 mb-6">Sampaguita Mining</h1>
         <div class="w-full max-w-sm space-y-4">
-            <input type="text" id="username" placeholder="Username" class="w-full bg-slate-100 p-4 rounded-2xl outline-none focus:ring-2 ring-green-500">
-            <input type="text" id="ref-input" placeholder="Referral Code (Optional)" class="w-full bg-slate-100 p-4 rounded-2xl outline-none">
-            <button onclick="login()" class="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-xl active:scale-95 transition-all">Enter Dashboard</button>
+            <input type="email" id="email" placeholder="Email" class="w-full p-3 border rounded-lg">
+            <input type="password" id="password" placeholder="Password" class="w-full p-3 border rounded-lg">
+            <button onclick="handleAuth('login')" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold">Login</button>
+            <button onclick="handleAuth('register')" class="w-full bg-gray-200 text-gray-700 p-3 rounded-lg font-bold">Register</button>
         </div>
     </div>
 
     <!-- Header -->
-    <header class="bg-green-600 text-white pt-10 pb-20 px-6 rounded-b-[3rem] shadow-xl relative z-30">
-        <div class="max-w-md mx-auto flex justify-between items-start">
-            <div>
-                <p class="text-[10px] font-bold uppercase opacity-80 tracking-widest">Available Balance</p>
-                <h1 class="text-4xl font-black">₱<span id="balance">0.00</span></h1>
-                <p id="display-uid" class="text-[10px] mt-2 opacity-60 font-mono">ID: ---</p>
-            </div>
-            <button onclick="toggleMenu()" class="bg-white/20 px-3 py-1 rounded-lg text-[10px] font-bold">MENU</button>
+    <header class="bg-green-600 text-white p-4 sticky top-0 z-40 shadow-lg">
+        <div class="flex justify-between items-center">
+            <span class="font-bold">SAMPAGUITA MINING</span>
+            <button onclick="checkAdmin()" class="text-xs bg-green-700 px-2 py-1 rounded">Admin</button>
         </div>
     </header>
 
-    <main class="max-w-md mx-auto px-4 -mt-12 relative z-10">
-        
-        <!-- GARDEN TAB -->
+    <main class="p-4 max-w-md mx-auto">
+        <!-- User Card -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 mb-4 border-b-4 border-green-500">
+
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-xs uppercase">Balance</p>
+                    <h2 class="text-3xl font-bold text-gray-800">₱<span id="u-balance">0.00</span></h2>
+                    <p class="text-[10px] text-gray-400 mt-1">ID: <span id="u-id">---</span></p>
+                </div>
+                <div class="text-right">
+                    <p class="text-gray-500 text-xs">Total Users</p>
+                    <p class="font-bold text-green-600" id="total-users">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Mining (Dashboard) -->
         <div id="tab-mining" class="tab-content active">
-            <!-- Market -->
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100">
-                    <span class="text-2xl">🌸</span>
-                    <h3 class="font-bold text-slate-800 text-xs mt-1">Sampaguita</h3>
-                    <p class="text-[9px] text-slate-400 mb-2">Cost ₱50 | ROI ₱55</p>
-                    <button onclick="buyFlower('sampaguita')" id="btn-buy-sampaguita" class="w-full py-2 bg-green-500 text-white text-[10px] font-bold rounded-xl">BUY (0/10)</button>
-                </div>
-                <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100">
-                    <span class="text-2xl">🌹</span>
-                    <h3 class="font-bold text-slate-800 text-xs mt-1">Red Rose</h3>
-                    <p class="text-[9px] text-slate-400 mb-2">Cost ₱100 | ROI ₱110</p>
-                    <button onclick="buyFlower('rose')" id="btn-buy-rose" class="w-full py-2 bg-rose-500 text-white text-[10px] font-bold rounded-xl">BUY (0/10)</button>
-                </div>
-            </div>
-
-            <!-- Guard Engineer -->
-            <div class="bg-yellow-500 p-5 rounded-3xl shadow-xl mb-6 relative overflow-hidden">
-                <div class="relative z-10">
-                    <h3 class="text-slate-900 font-black text-sm italic">GUARD ENGINEER 🛡️</h3>
-                    <p class="text-slate-900 text-[10px] opacity-80 mb-3">Extends mining by 3 hours. Pausedif not claimed.</p>
-                    <div id="guard-timer" class="hidden text-slate-900 font-mono text-xs mb-3 p-2 bg-yellow-400/30 border border-yellow-400/40 rounded-lg text-center">
-                        Active until: <span id="guard-time-left">--:--:--</span>
-                    </div>
-                    <button onclick="buyGuardEngineer()" class="w-full bg-slate-900 text-yellow-400 py-2.5 rounded-xl font-black text-[10px]">EXTEND MINING (₱0.20 PER PLANT)</button>
-                </div>
-            </div>
-
-            <h2 class="text-sm font-black text-slate-800 mb-4 px-2 uppercase tracking-widest">Your Garden</h2>
-            <div id="garden-list" class="space-y-3">
-                <!-- Plants will appear here -->
+            <h3 class="font-bold mb-3 flex items-center"><i class="fas fa-seedling mr-2 text-green-500"></i> Active Mining</h3>
+            <div id="active-mines-list" class="space-y-3">
+                <!-- Mining cards injected here -->
+                <p class="text-center text-gray-400 py-10">No active plants. Visit Shop to start.</p>
             </div>
         </div>
 
-        <!-- WALLET TAB -->
+        <!-- Section: Shop -->
+        <div id="tab-shop" class="tab-content">
+            <h3 class="font-bold mb-3">Plant Shop</h3>
+            <div class="grid grid-cols-1 gap-4">
+                <!-- Sampaguita -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between">
+                        <h4 class="font-bold text-lg">Sampaguita</h4>
+                        <span class="text-green-600 font-bold">₱50</span>
+                    </div>
+                    <ul class="text-sm text-gray-600 my-2">
+                        <li><i class="fas fa-check text-green-500 mr-1"></i> Total Profit: ₱55</li>
+                        <li><i class="fas fa-check text-green-500 mr-1"></i> Duration: 7 Days</li>
+                        <li><i class="fas fa-check text-green-500 mr-1"></i> Max Purchase: 10</li>
+                    </ul>
+                    <button onclick="buyPlant('sampaguita')" class="w-full bg-green-500 text-white py-2 rounded-lg mt-2 active:scale-95 transition">Purchase</button>
+                </div>
+                <!-- Rose -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between">
+                        <h4 class="font-bold text-lg text-rose-500">Rose Flower</h4>
+                        <span class="text-green-600 font-bold">₱100</span>
+                    </div>
+                    <ul class="text-sm text-gray-600 my-2">
+                        <li><i class="fas fa-check text-green-500 mr-1"></i> Total Profit: ₱110</li>
+                        <li><i class="fas fa-check text-green-500 mr-1"></i> Duration: 7 Days</li>
+                        <li><i class="fas fa-check text-green-500 mr-1"></i> Max Purchase: 10</li>
+                    </ul>
+                    <button onclick="buyPlant('rose')" class="w-full bg-rose-500 text-white py-2 rounded-lg mt-2 active:scale-95 transition">Purchase</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Wallet -->
         <div id="tab-wallet" class="tab-content">
-            <div class="bg-white p-6 rounded-3xl shadow-sm mb-4">
-                <h3 class="font-bold text-slate-800 mb-4">Withdraw (Min ₱100)</h3>
-                <input type="number" id="wit-amount" placeholder="Amount" class="w-full p-3 bg-slate-50 rounded-xl mb-3 outline-none">
-                <input type="text" id="wit-address" placeholder="GCash Number" class="w-full p-3 bg-slate-50 rounded-xl mb-3 outline-none">
-                <select id="wit-method" class="w-full p-3 bg-slate-50 rounded-xl mb-4 outline-none">
-                    <option>GCash</option>
-                    <option>PayPal</option>
-                    <option>FaucetPay</option>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <button onclick="toggleWalletView('deposit')" class="bg-blue-600 text-white p-3 rounded-lg">Deposit</button>
+                <button onclick="toggleWalletView('withdraw')" class="bg-orange-600 text-white p-3 rounded-lg">Withdraw</button>
+            </div>
+
+            <div id="wallet-deposit" class="bg-white p-4 ro
+
+unded-xl shadow-sm mb-4">
+                <h4 class="font-bold border-b pb-2 mb-2">Deposit Money</h4>
+                <div class="text-xs text-gray-500 mb-4">
+                    GCash: 09952533453<br>
+                    PayPal/FaucetPay: otico.isai2@gmail.com
+                </div>
+                <select id="dep-method" class="w-full p-2 border rounded mb-2 text-sm">
+                    <option value="GCash">GCash</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="FaucetPay">FaucetPay</option>
                 </select>
-                <button onclick="submitWithdrawal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold">Withdraw</button>
+                <input type="number" id="dep-amount" placeholder="Amount" class="w-full p-2 border rounded mb-2 text-sm">
+                <input type="text" id="dep-ref" placeholder="Reference Number" class="w-full p-2 border rounded mb-2 text-sm">
+                <input type="text" id="dep-name" placeholder="Account Name / Definition" class="w-full p-2 border rounded mb-2 text-sm">
+                <button onclick="submitDeposit()" class="w-full bg-green-600 text-white py-2 rounded">Submit Deposit</button>
             </div>
 
-            <div class="bg-indigo-600 p-6 rounded-3xl text-white shadow-lg mb-6">
-                <p class="text-[10px] font-bold opacity-80 uppercase mb-4 tracking-widest">Deposit Methods</p>
-                <div class="text-xs space-y-1 mb-4 opacity-90 font-mono">
-                    <p>GCash: 09952533453</p>
-                    <p>PayPal: otico.isai2@gmail.com</p>
-                    <p>FaucetPay: otico.isai2@gmail.com</p>
-                </div>
-                <input type="number" id="dep-amount" placeholder="Amount" class="w-full p-3 rounded-xl mb-2 text-slate-800 outline-none">
-                <input type="text" id="dep-ref" placeholder="Reference Number" class="w-full p-3 rounded-xl mb-3 text-slate-800 outline-none">
-                <button onclick="submitDeposit()" class="w-full bg-white text-indigo-600 py-3 rounded-xl font-bold">Submit Payment</button>
+            <div id="wallet-withdraw" class="bg-white p-4 rounded-xl shadow-sm mb-4 hidden">
+                <h4 class="font-bold border-b pb-2 mb-2">Withdraw (Min ₱100)</h4>
+                <select id="wit-method" class="w-full p-2 border rounded mb-2 text-sm">
+                    <option value="GCash">GCash</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="FaucetPay">FaucetPay</option>
+                </select>
+                <input type="number" id="wit-amount" placeholder="Amount" class="w-full p-2 border rounded mb-2 text-sm">
+                <input type="text" id="wit-details" placeholder="Account Number/Email" class="w-full p-2 border rounded mb-2 text-sm">
+                <button onclick="submitWithdraw()" class="w-full bg-orange-600 text-white py-2 rounded">Request Withdrawal</button>
             </div>
 
-            <h3 class="font-bold text-slate-800 mb-3 px-2">Cashout History</h3>
-            <div id="withdraw-history" class="space-y-2"></div>
+            <h4 class="font-bold text-sm mb-2">History</h4>
+            <div id="transaction-history" class="text-xs space-y-1"></div>
         </div>
 
-        <!-- INVITE TAB -->
-        <div id="tab-invite" class="tab-content">
-            <div class="bg-white p-8 rounded-3xl shadow-sm text-center">
-                <div class="text-4xl mb-4">💎</div>
-                <h2 class="text-xl font-black text-slate-800">5% Referral Bonus</h2>
-                <p class="text-xs text-slate-400 mb-6">Earn instantly when your friends deposit.</p>
-                <div class="bg-slate-50 border-2 border-dashed p-4 rounded-2xl mb-6">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Your Code</p>
-                    <p id="my-ref-code" class="text-3xl font-black text-indigo-600 tracking-widest">------</p>
+        <!-- Section: Referrals -->
+        <div id="tab-refer" class="tab-content">
+            <div class="bg-white p-6 rounded-2xl text-center shadow-sm">
+                <h3 class="font-bold text-xl mb-2">Refer & Earn 5%</h3>
+                <p class="text-gray-500 text-sm mb-4">Earn 5% from every deposit your friends make!</p>
+                <div class="bg-gray-100 p-3 rounded-lg font-mono text-lg mb-4" id="my-refer-code">------</div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="border-r">
+                        <p class="text-xs text-gray-500 uppercase">Invites</p>
+                        <p class="text-xl font-bold" id="total-ref-count">0</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Earnings</p>
+                        <p class="text-xl font-bold text-green-600">₱<span id="total-ref-earn">0.00</span></p>
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4 text-left">
-                    <div class="bg-slate-50 p-4 rounded-xl">
-                        <p class="text-[10px] text-slate-400 uppercase">Invites</p><p id="total-refs" class="text-lg font-bold">0</p>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl">
-                        <p class="text-[10px] text-slate-400 uppercase">Earnings</p>
-                        <p id="ref-earnings" class="text-lg font-bold text-green-600">₱0</p>
-                    </div>
+                <div class="mt-6 border-t pt-4">
+                    <input type="text" id="input-ref-code" placeholder="Enter referral code" class="w-full p-2 border rounded mb-2">
+                    <button onclick="applyReferral()" class="w-full bg-black text-white py-2 rounded-lg">Apply Code</button>
                 </div>
             </div>
         </div>
 
-        <!-- ADMIN TAB -->
+        <!-- Section: Admin (Hidden) -->
         <div id="tab-admin" class="tab-content">
-            <h2 class="font-bold mb-4">Pending Approvals</h2>
-            <div id="admin-requests" class="space-y-3"></div>
+            <h3 class="font-bold mb-3 text-red-600 text-center uppercase">Admin Panel</h3>
+            <div class="
+
+space-y-4">
+                <div class="bg-white p-3 rounded shadow">
+                    <h4 class="font-bold border-b mb-2">Pending Deposits</h4>
+                    <div id="admin-deposits" class="text-xs space-y-2"></div>
+                </div>
+                <div class="bg-white p-3 rounded shadow">
+                    <h4 class="font-bold border-b mb-2">Pending Withdrawals</h4>
+                    <div id="admin-withdrawals" class="text-xs space-y-2"></div>
+                </div>
+            </div>
         </div>
 
     </main>
 
     <!-- Footer -->
-    <footer class="fixed bottom-24 left-0 right-0 text-center pointer-events-none">
-        <span id="footer-time" class="bg-slate-900/80 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-md"></span>
+    <footer class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-2 z-40">
+        <button onclick="switchTab('mining')" class="flex flex-col items-center text-green-600"><i class="fas fa-hammer"></i><span class="text-[10px]">Mining</span></button>
+        <button onclick="switchTab('shop')" class="flex flex-col items-center text-gray-400"><i class="fas fa-store"></i><span class="text-[10px]">Shop</span></button>
+        <button onclick="switchTab('wallet')" class="flex flex-col items-center text-gray-400"><i class="fas fa-wallet"></i><span class="text-[10px]">Wallet</span></button>
+        <button onclick="switchTab('refer')" class="flex flex-col items-center text-gray-400"><i class="fas fa-users"></i><span class="text-[10px]">Refer</span></button>
     </footer>
 
-    <!-- Main Nav Bar (hidden when menu is open) -->
-    <nav id="main-nav" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm glass rounded-[2.5rem] p-2 flex justify-between shadow-2xl z-50">
-        <button onclick="switchTab('mining')" class="flex-1 py-3 flex flex-col items-center">
-            <span class="text-xl">🌱</span>
-            <span class="text-[9px] font-bold uppercase">Garden</span>
-        </button>
-        <button onclick="switchTab('wallet')" class="flex-1 py-3 flex flex-col items-center">
-            <span class="text-xl">💰</span>
-            <span class="text-[9px] font-bold uppercase">Wallet</span>
-        </button>
-        <button onclick="switchTab('invite')" class="flex-1 py-3 flex flex-col items-center">
-            <span class="text-xl">🤝</span>
-            <span class="text-[9px] font-bold uppercase">Invite</span>
-        </button>
-    </nav>
+    <div class="fixed bottom-14 left-0 right-0 text-center py-1 text-[10px] bg-gray-100 text-gray-400" id="footer-time"></div>
 
     <script src="app.js"></script>
 </body>
